@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Church Connect · Member Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        :root {
+            --primary: #1924c7;
+            --primary-light: #1f4a7a;
+            --green: #04aa41;
+            --green-light: #bbf7d0;
+            --green-dark: #15803d;
+            --gold: #d4af37;
+            --gold-light: #f5e6b8;
+            --bg: #f0f4fb;
+            --card-shadow: 0 8px 22px rgba(0,0,0,0.06);
+            --text-dark: #14283b;
+            --text-muted: #58718b;
+            --white: #ffffff;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --border-light: #e9edf3;
+            --panel-bg: rgba(255,255,255,0.92);
+            --main-bg: rgba(240,244,251,0.85);
+            --sidebar-bg: rgba(7, 5, 128, 0.92);
+            --shadow: 0 8px 22px rgba(0,0,0,0.06);
+            --login-bg: #cbd5e1;
+            --mpesa-green: #00a859;
+            --airtel-red: #e60000;
+        }
+        body.dark {
+            --bg: #0f172a;
+            --main-bg: rgba(15,23,42,0.92);
+            --panel-bg: rgba(30,41,59,0.92);
+            --text-dark: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-light: #334155;
+            --card-shadow: 0 8px 22px rgba(0,0,0,0.4);
+            --primary: #60a5fa;
+            --primary-light: #93bbfc;
+            --green: #34d399;
+            --green-dark: #059669;
+            --login-bg: #1e293b;
+        }
+        body.dark .stat-card, body.dark .panel, body.dark .topbar, body.dark .modal, body.dark .event-card { background: rgba(30,41,59,0.92) !important; color: #e2e8f0 !important; }
+        body.dark .stat-card .label, body.dark .event-meta, body.dark .tx-detail { color: #94a3b8 !important; }
+        body.dark .topbar-left h2, body.dark .panel h3, body.dark .worker-name, body.dark .number { color: #f1f5f9 !important; }
+        body.dark input, body.dark select, body.dark textarea { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+        body.dark .modal-overlay .modal { background: rgba(30,41,59,0.96) !important; }
+        body.dark .btn-secondary { background: #334155; color: #e2e8f0; }
+        body.dark .toast { background: #1e293b; color: #e2e8f0; }
+        body.dark .event-badge { background: #1e3a5f; color: #bfdbfe; }
+        body.dark .member-badge { background: #1e293b; color: #94a3b8; }
+        body.dark .btn-logout { border-color: #334155; color: #94a3b8; }
+        body.dark .btn-logout:hover { background: #1e293b; border-color: #475569; }
+        body.dark .login-box { background: rgba(30,41,59,0.96); color: #e2e8f0; border-color: #334155; }
+        body.dark .login-box h1 { color: #60a5fa; }
+        body.dark .login-box .brand-icon { color: #34d399; }
+        body.dark .payment-option { background: #1e293b; border-color: #334155; }
+        body.dark .payment-option:hover { border-color: #34d399; background: #2d3748; }
+        body.dark .paybill-info { background: #1e293b; border-color: #334155; }
+
+        body { background: var(--bg); color: var(--text-dark); min-height: 100vh; background-image: url('https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center; background-attachment: fixed; }
+        .main-wrap { backdrop-filter: blur(2px); background-color: var(--main-bg); min-height: 100vh; padding: 1.5rem 2rem; }
+
+        /* LOGIN PAGE */
+        .login-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--login-bg);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(2px);
+            transition: 0.3s;
+        }
+        .login-page.hidden { display: none; }
+        .login-box {
+            background: rgba(255,255,255,0.95);
+            padding: 2.5rem 2.8rem;
+            border-radius: 32px;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.15);
+            width: 100%; max-width: 420px;
+            backdrop-filter: blur(8px);
+            animation: modalIn 0.4s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        body.dark .login-box { background: rgba(30,41,59,0.95); color: #e2e8f0; border-color: #334155; }
+        .login-box h1 { font-size: 1.8rem; color: var(--primary); margin-bottom: 0.2rem; display: flex; align-items: center; gap: 10px; }
+        body.dark .login-box h1 { color: #60a5fa; }
+        .login-box .sub { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.8rem; }
+        .login-box .form-group { margin-bottom: 1.2rem; }
+        .login-box label { font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.3rem; color: var(--text-dark); }
+        body.dark .login-box label { color: #e2e8f0; }
+        .login-box input {
+            width: 100%; padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0; border-radius: 14px;
+            font-size: 1rem; background: #f8fafc;
+            transition: 0.2s;
+        }
+        body.dark .login-box input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+        .login-box input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
+        .login-box .btn-primary {
+            width: 100%; padding: 0.85rem; font-size: 1rem;
+            border-radius: 40px; margin-top: 0.5rem;
+            background: var(--primary); color: #fff; border: none;
+            font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .login-box .btn-primary:hover { background: var(--primary-light); transform: translateY(-2px); }
+        .login-box .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 0.5rem; text-align: center; display: none; }
+        .login-box .brand-icon { font-size: 2.5rem; color: var(--green); }
+        body.dark .login-box .brand-icon { color: #34d399; }
+
+        @keyframes modalIn { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+        .app-wrapper { display: none; width: 100%; }
+        .app-wrapper.active { display: block; }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--panel-bg); padding: 0.8rem 2rem;
+            border-radius: 28px; box-shadow: var(--card-shadow);
+            margin-bottom: 2rem; backdrop-filter: blur(4px);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .topbar-left h2 { font-size: 1.3rem; font-weight: 600; color: var(--primary); }
+        .topbar-right { display: flex; align-items: center; gap: 20px; }
+        .topbar-right .member-badge {
+            background: #eef2f9; color: var(--primary);
+            padding: 0.4rem 1.2rem; border-radius: 40px;
+            font-weight: 600; font-size: 0.8rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .topbar-right .member-badge i { color: var(--green); }
+        body.dark .topbar-right .member-badge { background: #1e293b; color: #94a3b8; }
+        .btn-logout {
+            background: transparent; border: 1px solid #e2e8f0;
+            padding: 0.4rem 1.4rem; border-radius: 40px;
+            color: var(--text-muted); font-weight: 500;
+            transition: 0.3s; cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-logout i { color: #f87171; }
+        .btn-logout:hover { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+        body.dark .btn-logout { border-color: #334155; color: #94a3b8; }
+        body.dark .btn-logout:hover { background: #1e293b; border-color: #475569; }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card {
+            border-radius: 24px; padding: 1.2rem;
+            box-shadow: var(--card-shadow);
+            border-left: 6px solid var(--primary);
+            background: var(--panel-bg);
+            backdrop-filter: blur(4px);
+            transition: 0.3s;
+        }
+        .stat-card:nth-child(1) { border-left-color: #3b82f6; }
+        .stat-card:nth-child(2) { border-left-color: #16a34a; }
+        .stat-card:nth-child(3) { border-left-color: #f59e0b; }
+        .stat-card:nth-child(4) { border-left-color: #ef4444; }
+        .stat-card .icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
+        .stat-card .icon i { color: var(--green); }
+        .stat-card:nth-child(1) .icon i { color: #3b82f6; }
+        .stat-card:nth-child(2) .icon i { color: #16a34a; }
+        .stat-card:nth-child(3) .icon i { color: #f59e0b; }
+        .stat-card:nth-child(4) .icon i { color: #ef4444; }
+        .stat-card .number { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .stat-card .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+
+        .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.8rem; margin-bottom: 2rem; }
+        .panel {
+            border-radius: 24px; padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            background: var(--panel-bg);
+            backdrop-filter: blur(4px);
+        }
+        .panel h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+        .panel h3 i { color: var(--green); }
+
+        .event-card {
+            background: var(--panel-bg);
+            border-radius: 16px; padding: 1rem 1.2rem;
+            margin-bottom: 0.8rem;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .event-card .event-name { font-weight: 700; color: var(--text-dark); }
+        .event-card .event-meta { font-size: 0.8rem; color: var(--text-muted); }
+        .event-card .event-badge {
+            background: #dbeafe; color: #1e40af;
+            padding: 0.1rem 0.8rem; border-radius: 30px;
+            font-size: 0.7rem; font-weight: 600;
+        }
+        body.dark .event-card .event-badge { background: #1e3a5f; color: #bfdbfe; }
+
+        .member-profile {
+            display: flex; flex-direction: column; gap: 0.6rem;
+        }
+        .member-profile .profile-row {
+            display: flex; justify-content: space-between;
+            padding: 0.4rem 0; border-bottom: 1px solid var(--border-light);
+        }
+        .member-profile .profile-row .label { color: var(--text-muted); font-size: 0.8rem; }
+        .member-profile .profile-row .value { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); }
+
+        /* PAYMENT SECTION */
+        .payment-section {
+            background: var(--panel-bg);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(4px);
+        }
+        .payment-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+        .payment-section h3 i { color: var(--green); }
+
+        .paybill-info {
+            background: #f8fafc;
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        body.dark .paybill-info { background: #1e293b; border-color: #34d399; }
+        .paybill-info .info-item {
+            text-align: center;
+        }
+        .paybill-info .info-item .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .paybill-info .info-item .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        body.dark .paybill-info .info-item .value { color: #60a5fa; }
+
+        .payment-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .payment-option {
+            background: var(--panel-bg);
+            border: 2px solid var(--border-light);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+        .payment-option:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .payment-option.selected { border-color: var(--green); background: var(--green-light); }
+        body.dark .payment-option.selected { background: #065f46; border-color: #34d399; }
+        .payment-option .icon { font-size: 2rem; display: block; margin-bottom: 0.3rem; }
+        .payment-option .name { font-weight: 600; font-size: 0.85rem; }
+        .payment-option .desc { font-size: 0.7rem; color: var(--text-muted); }
+
+        .payment-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .payment-form .form-group { margin-bottom: 1rem; }
+        .payment-form label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-dark); }
+        body.dark .payment-form label { color: #e2e8f0; }
+        .payment-form input, .payment-form select, .payment-form textarea {
+            width: 100%; padding: 0.7rem 1rem;
+            border: 1px solid #e2e8f0; border-radius: 12px;
+            font-size: 0.95rem; background: var(--bg);
+            transition: 0.2s;
+        }
+        body.dark .payment-form input, body.dark .payment-form select, body.dark .payment-form textarea {
+            background: #1e293b; border-color: #334155; color: #e2e8f0;
+        }
+        .payment-form input:focus, .payment-form select:focus {
+            outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+        }
+
+        .btn-pay {
+            background: var(--mpesa-green);
+            color: #fff;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,168,89,0.3); }
+        .btn-pay:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .payment-history {
+            margin-top: 1.5rem;
+        }
+        .payment-history .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border-light);
+            align-items: center;
+        }
+        .payment-history .history-item:last-child { border-bottom: none; }
+        .payment-history .history-item .details { display: flex; flex-direction: column; }
+        .payment-history .history-item .details .title { font-weight: 600; font-size: 0.9rem; }
+        .payment-history .history-item .details .meta { font-size: 0.75rem; color: var(--text-muted); }
+        .payment-history .history-item .amount { font-weight: 700; font-size: 1rem; }
+        .payment-history .history-item .amount.income { color: var(--green); }
+        .payment-history .history-item .status {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.6rem;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .status.success { background: var(--green-light); color: var(--green-dark); }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        body.dark .status.success { background: #065f46; color: #bbf7d0; }
+        body.dark .status.pending { background: #78350f; color: #fef3c7; }
+
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: var(--primary); color: #fff;
+            padding: 1rem 2rem; border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: none; align-items: center; gap: 12px;
+            z-index: 3000; animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+        .toast.show { display: flex; }
+        .toast.success { background: var(--green); }
+        .toast.error { background: var(--danger); }
+        .toast.info { background: var(--info); }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .theme-toggle {
+            display: flex; align-items: center; gap: 12px;
+            margin-top: 1rem;
+        }
+        .theme-toggle label { font-weight: 500; color: var(--text-dark); }
+        body.dark .theme-toggle label { color: #e2e8f0; }
+        .theme-toggle .toggle-track {
+            width: 48px; height: 26px;
+            background: #e2e8f0; border-radius: 40px;
+            position: relative; cursor: pointer;
+            transition: 0.3s; border: none;
+        }
+        body.dark .theme-toggle .toggle-track { background: #334155; }
+        .theme-toggle .toggle-track .thumb {
+            width: 20px; height: 20px;
+            background: #fff; border-radius: 50%;
+            position: absolute; top: 3px; left: 3px;
+            transition: 0.3s; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        body.dark .theme-toggle .toggle-track .thumb { left: 25px; background: #fbbf24; }
+        .theme-toggle .toggle-track.dark-mode { background: #1e293b; }
+        .theme-toggle .toggle-track.dark-mode .thumb { left: 25px; background: #fbbf24; }
+
+        footer { text-align: center; padding: 1.5rem 0 0; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border-light); margin-top: 1.5rem; }
+        footer i { color: var(--green); }
+
+        @media (max-width: 768px) {
+            .row-2col { grid-template-columns: 1fr; }
+            .main-wrap { padding: 1rem; }
+            .topbar { padding: 0.8rem 1rem; flex-wrap: wrap; }
+            .topbar-right { width: 100%; justify-content: flex-end; margin-top: 6px; }
+            .login-box { padding: 1.8rem; }
+            .payment-form .form-row { grid-template-columns: 1fr; }
+            .paybill-info { flex-direction: column; align-items: center; }
+        }
+        @media (max-width: 480px) {
+            .cards-grid { grid-template-columns: 1fr; }
+            .login-box { padding: 1.2rem; }
+            .payment-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN PAGE -->
+    <div class="login-page" id="loginPage">
+        <div class="login-box">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:0.2rem;">
+                <h1>T.R.C Thika Landless</h1>
+            </div>
+            <div class="sub">Member Portal</div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="Enter phone number " value="">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" value="">
+                </div>
+                <div class="error-msg" id="loginError">Invalid phone number or password</div>
+                <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                    <i class="fas fa-info-circle"></i> Use your registered phone number. Default password: member123 <strong></strong>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="app-wrapper" id="appWrapper">
+        <div class="main-wrap">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h2><i class="fas fa-user-circle" style="color:var(--green);"></i> My Dashboard</h2>
+                </div>
+                <div class="topbar-right">
+                    <span class="member-badge"><i class="fas fa-user"></i> <span id="memberNameDisplay">Member</span></span>
+                    <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </header>
+
+            <!-- STATS -->
+            <section class="cards-grid" id="statsGrid">
+                <div class="stat-card"><div class="icon"><i class="fas fa-phone"></i></div><div class="number" id="myPhone">-</div><div class="label">My Phone</div></div>
+                <div class="stat-card"><div class="icon"><i class="fas fa-calendar-alt"></i></div><div class="number" id="eventCount">0</div><div class="label">Upcoming Events</div></div>
+                <div class="stat-card"><div class="icon"><i class="fas fa-hand-holding-heart"></i></div><div class="number" id="myTithes">KES 0</div><div class="label">My Giving</div></div>
+                <div class="stat-card"><div class="icon"><i class="fas fa-users"></i></div><div class="number" id="totalMembers">0</div><div class="label">Total Members</div></div>
+            </section>
+
+            <!-- CONTENT -->
+            <div class="row-2col">
+                <div class="panel">
+                    <h3><i class="fas fa-id-card" style="color:var(--green);"></i> My Profile</h3>
+                    <div class="member-profile" id="memberProfile">
+                        <div class="profile-row"><span class="label">Full Name</span><span class="value" id="pName">-</span></div>
+                        <div class="profile-row"><span class="label">Phone</span><span class="value" id="pPhone">-</span></div>
+                        <div class="profile-row"><span class="label">Email</span><span class="value" id="pEmail">-</span></div>
+                        <div class="profile-row"><span class="label">Department</span><span class="value" id="pDept">-</span></div>
+                        <div class="profile-row"><span class="label">Branch</span><span class="value" id="pBranch">-</span></div>
+                        <div class="profile-row"><span class="label">Member Since</span><span class="value" id="pJoin">-</span></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3><i class="fas fa-calendar-plus" style="color:var(--green);"></i> Upcoming Events</h3>
+                    <div id="eventsList">
+                        <div style="color: var(--text-muted); text-align:center; padding:1rem;">Loading events...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENT SECTION -->
+            <div class="payment-section">
+                <h3><i class="fas fa-mobile-alt" style="color:var(--mpesa-green);"></i> Make a Payment</h3>
+                
+                <div class="paybill-info">
+                    <div class="info-item">
+                        <div class="label">Paybill Number</div>
+                        <div class="value">247247</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Account Number</div>
+                        <div class="value">848420</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Purpose</div>
+                        <div class="value" style="font-size:0.9rem;">Tithe / Offering</div>
+                    </div>
+                </div>
+
+                <div class="payment-options" id="paymentOptions">
+                    <div class="payment-option selected" data-method="MPESA">
+                        <span class="icon"><i class="fas fa-phone-alt" style="color:var(--mpesa-green);"></i></span>
+                        <div class="name">MPESA</div>
+                        <div class="desc">Pay via MPESA</div>
+                    </div>
+                    <div class="payment-option" data-method="Airtel Money">
+                        <span class="icon"><i class="fas fa-wifi" style="color:var(--airtel-red);"></i></span>
+                        <div class="name">Airtel Money</div>
+                        <div class="desc">Pay via Airtel</div>
+                    </div>
+                    <div class="payment-option" data-method="Bank Transfer">
+                        <span class="icon"><i class="fas fa-university" style="color:#3b82f6;"></i></span>
+                        <div class="name">Bank Transfer</div>
+                        <div class="desc">Direct bank deposit</div>
+                    </div>
+                </div>
+
+                <form id="paymentForm" class="payment-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-tag"></i> Payment Type *</label>
+                            <select id="paymentType" required>
+                                <option value="Tithe">Tithe</option>
+                                <option value="Offering">Offering</option>
+                                <option value="Thanksgiving">Thanksgiving</option>
+                                <option value="Donation">Donation</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-money-bill-wave"></i> Amount (KES) *</label>
+                            <input type="number" id="paymentAmount" required step="1" min="1" placeholder="e.g. 500" value="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-comment"></i> Reference / Note (optional)</label>
+                        <input type="text" id="paymentReference" placeholder="e.g. Sunday offering, special seed">
+                    </div>
+                    <button type="submit" class="btn-pay" id="payButton">
+                        <i class="fas fa-check-circle"></i> Confirm Payment via Paybill 247247
+                    </button>
+                </form>
+
+                <div class="payment-history" id="paymentHistory">
+                    <h4 style="margin-bottom:0.8rem; font-size:0.9rem; color:var(--text-muted);"><i class="fas fa-clock"></i> My Payment History</h4>
+                    <div id="paymentHistoryList">
+                        <div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">No payments recorded yet.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div class="theme-toggle">
+                    <label><i class="fas fa-moon"></i> Dark Mode</label>
+                    <button class="toggle-track" id="themeToggle" type="button">
+                        <span class="thumb"></span>
+                    </button>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">
+                    <i class="fas fa-sync-alt"></i> Data synced with Church Management
+                </span>
+            </div>
+
+            <footer><i class="fas fa-church"></i> T.R.C INT'L · Member Portal &bull; Connected to Church Manager</footer>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMessage">Success!</span></div>
+
+    <script>
+        // ===== DATA SHARING =====
+        function getWorkers() { return JSON.parse(localStorage.getItem('churchWorkers')) || []; }
+        function getEvents() { return JSON.parse(localStorage.getItem('churchEvents')) || []; }
+        function getTithes() { return JSON.parse(localStorage.getItem('churchTithes')) || []; }
+        function getDepartments() { return JSON.parse(localStorage.getItem('churchDepartments')) || []; }
+        function getBranches() { return JSON.parse(localStorage.getItem('churchBranches')) || []; }
+        function getTransactions() { return JSON.parse(localStorage.getItem('churchTransactions')) || []; }
+
+        function setWorkers(data) { localStorage.setItem('churchWorkers', JSON.stringify(data)); }
+        function setEvents(data) { localStorage.setItem('churchEvents', JSON.stringify(data)); }
+        function setTithes(data) { localStorage.setItem('churchTithes', JSON.stringify(data)); }
+        function setTransactions(data) { localStorage.setItem('churchTransactions', JSON.stringify(data)); }
+
+        // ===== LOGIN =====
+        const loginPage = document.getElementById('loginPage');
+        const appWrapper = document.getElementById('appWrapper');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+
+        let currentMember = null;
+
+        if (sessionStorage.getItem('memberLoggedIn') === 'true') {
+            const saved = sessionStorage.getItem('currentMember');
+            if (saved) {
+                currentMember = JSON.parse(saved);
+                loginPage.classList.add('hidden');
+                appWrapper.classList.add('active');
+                renderDashboard();
+            }
+        }
+
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const phoneInput = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            let normalizedPhone = phoneInput.replace(/\D/g, '');
+            const workers = getWorkers();
+            
+            const member = workers.find(w => {
+                const wPhone = (w.phone || '').replace(/\D/g, '');
+                return wPhone === normalizedPhone || w.phone === phoneInput;
+            });
+            
+            if (member && (password === 'member123' || password === member.password)) {
+                currentMember = member;
+                sessionStorage.setItem('memberLoggedIn', 'true');
+                sessionStorage.setItem('currentMember', JSON.stringify(member));
+                loginPage.classList.add('hidden');
+                appWrapper.classList.add('active');
+                loginError.style.display = 'none';
+                showToast('Welcome, ' + member.name + '!');
+                renderDashboard();
+            } else {
+                loginError.style.display = 'block';
+                setTimeout(() => loginError.style.display = 'none', 3000);
+            }
+        });
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('memberLoggedIn');
+                sessionStorage.removeItem('currentMember');
+                currentMember = null;
+                loginPage.classList.remove('hidden');
+                appWrapper.classList.remove('active');
+                showToast('Logged out successfully');
+            }
+        }
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+        // ===== THEME =====
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('memberTheme') === 'dark') {
+            body.classList.add('dark');
+            themeToggle.classList.add('dark-mode');
+        }
+        themeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark');
+            this.classList.toggle('dark-mode');
+            localStorage.setItem('memberTheme', body.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // ===== TOAST =====
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            toast.className = 'toast ' + type;
+            toastMsg.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // ===== PAYMENT SYSTEM =====
+        // Payment method selection
+        document.querySelectorAll('.payment-option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Payment form submission
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!currentMember) {
+                showToast('Please login first', 'error');
+                return;
+            }
+
+            const type = document.getElementById('paymentType').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const reference = document.getElementById('paymentReference').value.trim();
+            const selectedMethod = document.querySelector('.payment-option.selected');
+            const method = selectedMethod ? selectedMethod.dataset.method : 'MPESA';
+
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return;
+            }
+
+            // Show processing
+            const payBtn = document.getElementById('payButton');
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            // Simulate payment processing
+            setTimeout(() => {
+                // Record the payment
+                const paymentData = {
+                    id: Date.now(),
+                    workerId: currentMember.id,
+                    workerName: currentMember.name,
+                    amount: amount,
+                    type: type,
+                    method: method,
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toLocaleTimeString(),
+                    reference: reference || 'Paybill 247247',
+                    status: 'completed',
+                    account: '848420',
+                    paybill: '247247'
+                };
+
+                // Save to tithes
+                let tithes = getTithes();
+                tithes.push(paymentData);
+                setTithes(tithes);
+
+                // Save to transactions
+                let transactions = getTransactions();
+                transactions.unshift({
+                    id: paymentData.id,
+                    type: 'income',
+                    title: `${type} - ${currentMember.name} (Paybill 247247)`,
+                    amount: amount,
+                    method: method,
+                    date: paymentData.date,
+                    category: type,
+                    reference: reference || 'Paybill 247247',
+                    account: '848420'
+                });
+                setTransactions(transactions);
+
+                // Update member's giving total
+                let workers = getWorkers();
+                const memberIndex = workers.findIndex(w => w.id === currentMember.id);
+                if (memberIndex !== -1) {
+                    workers[memberIndex].totalGiving = (workers[memberIndex].totalGiving || 0) + amount;
+                    setWorkers(workers);
+                    // Update current member
+                    currentMember = workers[memberIndex];
+                    sessionStorage.setItem('currentMember', JSON.stringify(currentMember));
+                }
+
+                // Trigger storage event for other tabs (management system)
+                localStorage.setItem('churchTithes', JSON.stringify(tithes));
+                localStorage.setItem('churchTransactions', JSON.stringify(transactions));
+
+                showToast(`✅ Payment of KES ${amount.toFixed(2)} via ${method} recorded successfully!`, 'success');
+
+                // Reset form
+                document.getElementById('paymentAmount').value = '';
+                document.getElementById('paymentReference').value = '';
+
+                // Re-enable button
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment via Paybill 247247';
+
+                // Refresh dashboard
+                renderDashboard();
+                renderPaymentHistory();
+
+            }, 1500);
+        });
+
+        // ===== RENDER PAYMENT HISTORY =====
+        function renderPaymentHistory() {
+            const container = document.getElementById('paymentHistoryList');
+            if (!currentMember) {
+                container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">Please login to view payment history.</div>`;
+                return;
+            }
+
+            const tithes = getTithes();
+            const myPayments = tithes.filter(t => t.workerId === currentMember.id || t.workerName === currentMember.name)
+                .sort((a, b) => b.id - a.id);
+
+            if (myPayments.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">No payments recorded yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = myPayments.slice(0, 10).map(p => `
+                <div class="history-item">
+                    <div class="details">
+                        <div class="title">${p.type}</div>
+                        <div class="meta">
+                            <i class="fas fa-phone"></i> Paybill 247247 · Acct 848420
+                            ${p.reference ? ` · ${p.reference}` : ''}
+                            <br><i class="fas fa-clock"></i> ${p.date} ${p.time || ''}
+                            <span class="status success">Completed</span>
+                        </div>
+                    </div>
+                    <div class="amount income">KES ${p.amount.toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== RENDER DASHBOARD =====
+        function renderDashboard() {
+            if (!currentMember) return;
+            const workers = getWorkers();
+            const events = getEvents();
+            const tithes = getTithes();
+
+            // Profile
+            document.getElementById('memberNameDisplay').textContent = currentMember.name || 'Member';
+            document.getElementById('myPhone').textContent = currentMember.phone || '-';
+            document.getElementById('pName').textContent = currentMember.name || '-';
+            document.getElementById('pPhone').textContent = currentMember.phone || '-';
+            document.getElementById('pEmail').textContent = currentMember.email || '-';
+            document.getElementById('pDept').textContent = currentMember.department || 'N/A';
+            document.getElementById('pBranch').textContent = currentMember.branch || 'N/A';
+            document.getElementById('pJoin').textContent = currentMember.joinDate || 'N/A';
+
+            // Total members
+            document.getElementById('totalMembers').textContent = workers.length;
+
+            // My giving
+            const myTithes = tithes.filter(t => t.workerId === currentMember.id || t.workerName === currentMember.name);
+            const total = myTithes.reduce((s, t) => s + t.amount, 0);
+            document.getElementById('myTithes').textContent = 'KES ' + total.toFixed(0);
+
+            // Upcoming events
+            const today = new Date().toISOString().split('T')[0];
+            const upcoming = events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+            document.getElementById('eventCount').textContent = upcoming.length;
+
+            const eventsContainer = document.getElementById('eventsList');
+            if (upcoming.length === 0) {
+                eventsContainer.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:1rem;">No upcoming events. Stay tuned!</div>`;
+            } else {
+                eventsContainer.innerHTML = upcoming.slice(0, 5).map(e => `
+                    <div class="event-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                            <div>
+                                <div class="event-name">${e.name}</div>
+                                <div class="event-meta"><i class="fas fa-map-marker-alt"></i> ${e.venue || 'TBA'} &bull; ${e.date} at ${e.time}</div>
+                            </div>
+                            <span class="event-badge">${e.department || 'General'}</span>
+                        </div>
+                        ${e.description ? `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.3rem;">${e.description}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            // Render payment history
+            renderPaymentHistory();
+        }
+
+        // ===== AUTO REFRESH ON DATA CHANGE =====
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'churchWorkers' || e.key === 'churchEvents' || e.key === 'churchTithes' || e.key === 'churchTransactions') {
+                if (sessionStorage.getItem('memberLoggedIn') === 'true') {
+                    const saved = sessionStorage.getItem('currentMember');
+                    if (saved) {
+                        currentMember = JSON.parse(saved);
+                        const workers = getWorkers();
+                        const updated = workers.find(w => w.phone === currentMember.phone);
+                        if (updated) {
+                            currentMember = updated;
+                            sessionStorage.setItem('currentMember', JSON.stringify(currentMember));
+                        }
+                        renderDashboard();
+                        showToast('Data synced with church management', 'info');
+                    }
+                }
+            }
+        });
+
+        // ===== INIT =====
+        if (sessionStorage.getItem('memberLoggedIn') === 'true') {
+            const saved = sessionStorage.getItem('currentMember');
+            if (saved) {
+                currentMember = JSON.parse(saved);
+                const workers = getWorkers();
+                const updated = workers.find(w => w.phone === currentMember.phone);
+                if (updated) {
+                    currentMember = updated;
+                    sessionStorage.setItem('currentMember', JSON.stringify(currentMember));
+                }
+                renderDashboard();
+            }
+        }
+
+        // Seed demo data if empty
+        (function seedDemoData() {
+            let workers = getWorkers();
+            let events = getEvents();
+            let tithes = getTithes();
+            let departments = getDepartments();
+            let branches = getBranches();
+
+            if (workers.length === 0 && departments.length === 0 && branches.length === 0) {
+                const deptData = [
+                    { id: 1, name: 'Worship Team', description: 'Music and praise' },
+                    { id: 2, name: 'Ushering', description: 'Hospitality and welcome' },
+                    { id: 3, name: 'Youth', description: 'Youth ministry' }
+                ];
+                departments = deptData;
+                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+
+                const branchData = [
+                    { id: 1, name: 'Nairobi Central', location: 'Nairobi CBD', pastor: 'Rev. John' },
+                    { id: 2, name: 'Thika', location: 'Thika Town', pastor: 'Rev. Francis' }
+                ];
+                branches = branchData;
+                localStorage.setItem('churchBranches', JSON.stringify(branches));
+
+                const workerData = [
+                    { id: 1, name: 'Vincent Mwangi', gender: 'Male', phone: '0711717607', email: 'vince@example.com', occupation: 'Doctor', address: 'Nairobi', marital: 'Single', baptism: 'Baptized', department: 'Worship Team', branch: 'Nairobi Central', joinDate: '2025-01-15', password: 'member123', totalGiving: 7000 },
+                    { id: 2, name: 'Grace Akinyi', gender: 'Female', phone: '0722334455', email: 'grace@example.com', occupation: 'Teacher', address: 'Thika', marital: 'Married', baptism: 'Baptized', department: 'Youth', branch: 'Thika', joinDate: '2025-02-01', password: 'member123', totalGiving: 3000 },
+                    { id: 3, name: 'Peter Otieno', gender: 'Male', phone: '0733445566', email: 'peter@example.com', occupation: 'Engineer', address: 'Nairobi', marital: 'Single', baptism: 'Baptized', department: 'Ushering', branch: 'Nairobi Central', joinDate: '2025-03-10', password: 'member123', totalGiving: 4000 },
+                    { id: 4, name: 'Sarah Wanjiru', gender: 'Female', phone: '0744556677', email: 'sarah@example.com', occupation: 'Nurse', address: 'Thika', marital: 'Married', baptism: 'Baptized', department: 'Worship Team', branch: 'Thika', joinDate: '2025-04-05', password: 'member123', totalGiving: 2500 }
+                ];
+                workers = workerData;
+                localStorage.setItem('churchWorkers', JSON.stringify(workers));
+
+                const titheData = [
+                    { id: 1, workerId: 1, workerName: 'Vincent Mwangi', amount: 5000, type: 'Tithe', method: 'MPESA', date: '2026-06-01', time: '10:30', reference: 'Paybill 247247', account: '848420', paybill: '247247', status: 'completed' },
+                    { id: 2, workerId: 1, workerName: 'Vincent Mwangi', amount: 2000, type: 'Offering', method: 'Cash', date: '2026-06-08', time: '11:15', reference: 'Sunday service', status: 'completed' },
+                    { id: 3, workerId: 2, workerName: 'Grace Akinyi', amount: 3000, type: 'Tithe', method: 'MPESA', date: '2026-06-05', time: '09:45', reference: 'Paybill 247247', account: '848420', paybill: '247247', status: 'completed' },
+                    { id: 4, workerId: 3, workerName: 'Peter Otieno', amount: 4000, type: 'Tithe', method: 'Bank Transfer', date: '2026-06-10', time: '14:20', reference: 'Monthly tithe', status: 'completed' },
+                    { id: 5, workerId: 4, workerName: 'Sarah Wanjiru', amount: 2500, type: 'Tithe', method: 'MPESA', date: '2026-06-12', time: '08:00', reference: 'Paybill 247247', account: '848420', paybill: '247247', status: 'completed' }
+                ];
+                tithes = titheData;
+                localStorage.setItem('churchTithes', JSON.stringify(tithes));
+
+                const eventData = [
+                    { id: 1, name: 'Sunday Worship', venue: 'Main Sanctuary', date: '2026-06-29', time: '10:00', description: 'Weekly Sunday service', department: 'Worship Team' },
+                    { id: 2, name: 'Youth Camp', venue: 'Thika Grounds', date: '2026-07-05', time: '08:00', description: 'Annual youth camping', department: 'Youth' },
+                    { id: 3, name: 'Prayer Night', venue: 'Nairobi Central', date: '2026-06-30', time: '18:00', description: 'All night prayer', department: 'General' },
+                    { id: 4, name: 'Leadership Conference', venue: 'Nairobi CBD', date: '2026-07-15', time: '09:00', description: 'Annual leadership training', department: 'General' }
+                ];
+                events = eventData;
+                localStorage.setItem('churchEvents', JSON.stringify(events));
+
+                let transactions = [];
+                tithes.forEach(t => { 
+                    transactions.push({ 
+                        id: t.id, 
+                        type: 'income', 
+                        title: `${t.type} - ${t.workerName} (Paybill 247247)`, 
+                        amount: t.amount, 
+                        method: t.method, 
+                        date: t.date, 
+                        category: t.type,
+                        reference: t.reference || 'Paybill 247247',
+                        account: '848420'
+                    }); 
+                });
+                localStorage.setItem('churchTransactions', JSON.stringify(transactions));
+
+                console.log('Demo data seeded with Paybill 247247 system');
+            }
+        })();
+
+        console.log('Church Connect · Member Portal with Paybill 247247, Account 848420');
+        console.log('All payments sync to Church Manager via localStorage');
+    </script>
+</body>
+</html>
