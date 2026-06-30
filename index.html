@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,9 +6,6 @@
     <title>Church Connect · Member Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         :root {
@@ -381,20 +378,6 @@
         footer { text-align: center; padding: 1.5rem 0 0; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border-light); margin-top: 1.5rem; }
         footer i { color: var(--green); }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid #3498db;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         @media (max-width: 768px) {
             .row-2col { grid-template-columns: 1fr; }
             .main-wrap { padding: 1rem; }
@@ -418,20 +401,20 @@
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:0.2rem;">
                 <h1>T.R.C Thika Landless</h1>
             </div>
-            <div class="sub">Member Portal · Cloud Sync</div>
+            <div class="sub">Member Portal</div>
             <form id="loginForm">
                 <div class="form-group">
                     <label><i class="fas fa-phone"></i> Phone Number</label>
-                    <input type="tel" id="loginPhone" placeholder="Enter phone number" value="0711717607">
+                    <input type="tel" id="loginPhone" placeholder="Enter phone number " value="">
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-lock"></i> Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter password" value="member123">
+                    <input type="password" id="loginPassword" placeholder="Enter password" value="">
                 </div>
                 <div class="error-msg" id="loginError">Invalid phone number or password</div>
-                <button type="submit" class="btn-primary" id="loginSubmitBtn"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+                <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
                 <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-                    <i class="fas fa-cloud"></i> Data synced via Firebase
+                    <i class="fas fa-info-circle"></i> Use your registered phone number. Default password: member123 <strong></strong>
                 </div>
             </form>
         </div>
@@ -530,7 +513,7 @@
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-money-bill-wave"></i> Amount (KES) *</label>
-                            <input type="number" id="paymentAmount" required step="1" min="1" placeholder="e.g. 500" value="1000">
+                            <input type="number" id="paymentAmount" required step="1" min="1" placeholder="e.g. 500" value="">
                         </div>
                     </div>
                     <div class="form-group">
@@ -558,243 +541,77 @@
                     </button>
                 </div>
                 <span style="font-size: 0.75rem; color: var(--text-muted);">
-                    <i class="fas fa-cloud"></i> Real-time sync with Firebase
+                    <i class="fas fa-sync-alt"></i> Data synced with Church Management
                 </span>
             </div>
 
-            <footer><i class="fas fa-church"></i> T.R.C INT'L · Member Portal &bull; Connected to Cloud</footer>
+            <footer><i class="fas fa-church"></i> T.R.C INT'L · Member Portal &bull; Connected to Church Manager</footer>
         </div>
     </div>
 
     <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMessage">Success!</span></div>
 
     <script>
-        // ===== FIREBASE CONFIGURATION =====
-        // 🔥 REPLACE WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE 🔥
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+        // ===== DATA SHARING =====
+        function getWorkers() { return JSON.parse(localStorage.getItem('churchWorkers')) || []; }
+        function getEvents() { return JSON.parse(localStorage.getItem('churchEvents')) || []; }
+        function getTithes() { return JSON.parse(localStorage.getItem('churchTithes')) || []; }
+        function getDepartments() { return JSON.parse(localStorage.getItem('churchDepartments')) || []; }
+        function getBranches() { return JSON.parse(localStorage.getItem('churchBranches')) || []; }
+        function getTransactions() { return JSON.parse(localStorage.getItem('churchTransactions')) || []; }
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Enable offline persistence
-        db.enablePersistence({ synchronizeTabs: true })
-            .catch(err => console.log('Firebase persistence:', err));
-
-        // ===== DATA HELPERS =====
-        const COLLECTIONS = {
-            WORKERS: 'workers',
-            EVENTS: 'events',
-            TITHES: 'tithes',
-            TRANSACTIONS: 'transactions',
-            DEPARTMENTS: 'departments',
-            BRANCHES: 'branches'
-        };
-
-        // ===== GLOBAL STATE =====
-        let currentMember = null;
-        let allWorkers = [];
-        let allEvents = [];
-        let allTithes = [];
-        let allTransactions = [];
-        let allDepartments = [];
-        let allBranches = [];
-
-        // ===== TOAST =====
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMessage');
-            toast.className = 'toast ' + type;
-            toastMsg.textContent = message;
-            toast.classList.add('show');
-            clearTimeout(toast._timer);
-            toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
-        }
-
-        // ===== LOAD DATA FROM FIREBASE =====
-        async function loadAllData() {
-            try {
-                const [workersSnap, eventsSnap, tithesSnap, transactionsSnap, deptsSnap, branchesSnap] = await Promise.all([
-                    db.collection(COLLECTIONS.WORKERS).get(),
-                    db.collection(COLLECTIONS.EVENTS).get(),
-                    db.collection(COLLECTIONS.TITHES).get(),
-                    db.collection(COLLECTIONS.TRANSACTIONS).get(),
-                    db.collection(COLLECTIONS.DEPARTMENTS).get(),
-                    db.collection(COLLECTIONS.BRANCHES).get()
-                ]);
-
-                allWorkers = workersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allEvents = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allTithes = tithesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allTransactions = transactionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allDepartments = deptsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allBranches = branchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                console.log('✅ Data loaded from Firebase:', {
-                    workers: allWorkers.length,
-                    events: allEvents.length,
-                    tithes: allTithes.length,
-                    transactions: allTransactions.length,
-                    departments: allDepartments.length,
-                    branches: allBranches.length
-                });
-
-                return true;
-            } catch (error) {
-                console.error('❌ Error loading data:', error);
-                showToast('Error loading data. Please check your connection.', 'error');
-                return false;
-            }
-        }
-
-        // ===== SEED INITIAL DATA =====
-        async function seedInitialData() {
-            // Check if data already exists
-            const workersSnap = await db.collection(COLLECTIONS.WORKERS).limit(1).get();
-            if (!workersSnap.empty) return; // Data already exists
-
-            console.log('🌱 Seeding initial data...');
-
-            const depts = [
-                { name: 'Worship Team', description: 'Music and praise' },
-                { name: 'Ushering', description: 'Hospitality and welcome' },
-                { name: 'Youth', description: 'Youth ministry' },
-                { name: 'Evangelism', description: 'Outreach and evangelism' }
-            ];
-
-            const branches = [
-                { name: 'Nairobi Central', location: 'Nairobi CBD', pastor: 'Rev. John' },
-                { name: 'Thika', location: 'Thika Town', pastor: 'Rev. Francis' }
-            ];
-
-            const workers = [
-                { name: 'Vincent Mwangi', gender: 'Male', phone: '0711717607', email: 'vince@example.com', occupation: 'Doctor', address: 'Nairobi', marital: 'Single', baptism: 'Baptized', department: 'Worship Team', branch: 'Nairobi Central', joinDate: '2025-01-15', password: 'member123', totalGiving: 7000 },
-                { name: 'Grace Akinyi', gender: 'Female', phone: '0722334455', email: 'grace@example.com', occupation: 'Teacher', address: 'Thika', marital: 'Married', baptism: 'Baptized', department: 'Youth', branch: 'Thika', joinDate: '2025-02-01', password: 'member123', totalGiving: 3000 },
-                { name: 'Peter Otieno', gender: 'Male', phone: '0733445566', email: 'peter@example.com', occupation: 'Engineer', address: 'Nairobi', marital: 'Single', baptism: 'Baptized', department: 'Ushering', branch: 'Nairobi Central', joinDate: '2025-03-10', password: 'member123', totalGiving: 4000 },
-                { name: 'Sarah Wanjiru', gender: 'Female', phone: '0744556677', email: 'sarah@example.com', occupation: 'Nurse', address: 'Thika', marital: 'Married', baptism: 'Baptized', department: 'Worship Team', branch: 'Thika', joinDate: '2025-04-05', password: 'member123', totalGiving: 2500 }
-            ];
-
-            const events = [
-                { name: 'Sunday Worship', venue: 'Main Sanctuary', date: '2026-06-29', time: '10:00', description: 'Weekly Sunday service', department: 'Worship Team' },
-                { name: 'Youth Camp', venue: 'Thika Grounds', date: '2026-07-05', time: '08:00', description: 'Annual youth camping', department: 'Youth' },
-                { name: 'Prayer Night', venue: 'Nairobi Central', date: '2026-06-30', time: '18:00', description: 'All night prayer', department: 'General' },
-                { name: 'Leadership Conference', venue: 'Nairobi CBD', date: '2026-07-15', time: '09:00', description: 'Annual leadership training', department: 'General' }
-            ];
-
-            const tithes = [
-                { workerId: '1', workerName: 'Vincent Mwangi', amount: 5000, type: 'Tithe', method: 'MPESA', date: '2026-06-01', time: '10:30', reference: 'Paybill 247247', account: '848420', paybill: '247247', status: 'completed' },
-                { workerId: '1', workerName: 'Vincent Mwangi', amount: 2000, type: 'Offering', method: 'Cash', date: '2026-06-08', time: '11:15', reference: 'Sunday service', status: 'completed' },
-                { workerId: '2', workerName: 'Grace Akinyi', amount: 3000, type: 'Tithe', method: 'MPESA', date: '2026-06-05', time: '09:45', reference: 'Paybill 247247', account: '848420', paybill: '247247', status: 'completed' }
-            ];
-
-            // Save departments
-            for (const dept of depts) {
-                await db.collection(COLLECTIONS.DEPARTMENTS).add(dept);
-            }
-
-            // Save branches
-            for (const branch of branches) {
-                await db.collection(COLLECTIONS.BRANCHES).add(branch);
-            }
-
-            // Save workers
-            for (const worker of workers) {
-                await db.collection(COLLECTIONS.WORKERS).add(worker);
-            }
-
-            // Save events
-            for (const event of events) {
-                await db.collection(COLLECTIONS.EVENTS).add(event);
-            }
-
-            // Save tithes
-            for (const tithe of tithes) {
-                await db.collection(COLLECTIONS.TITHES).add(tithe);
-                // Also add to transactions
-                await db.collection(COLLECTIONS.TRANSACTIONS).add({
-                    type: 'income',
-                    title: `${tithe.type} - ${tithe.workerName} (Paybill 247247)`,
-                    amount: tithe.amount,
-                    method: tithe.method,
-                    date: tithe.date,
-                    category: tithe.type,
-                    reference: tithe.reference || 'Paybill 247247',
-                    account: '848420'
-                });
-            }
-
-            console.log('✅ Initial data seeded successfully!');
-        }
+        function setWorkers(data) { localStorage.setItem('churchWorkers', JSON.stringify(data)); }
+        function setEvents(data) { localStorage.setItem('churchEvents', JSON.stringify(data)); }
+        function setTithes(data) { localStorage.setItem('churchTithes', JSON.stringify(data)); }
+        function setTransactions(data) { localStorage.setItem('churchTransactions', JSON.stringify(data)); }
 
         // ===== LOGIN =====
         const loginPage = document.getElementById('loginPage');
         const appWrapper = document.getElementById('appWrapper');
         const loginForm = document.getElementById('loginForm');
         const loginError = document.getElementById('loginError');
-        const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 
-        // Check session
+        let currentMember = null;
+
         if (sessionStorage.getItem('memberLoggedIn') === 'true') {
             const saved = sessionStorage.getItem('currentMember');
             if (saved) {
                 currentMember = JSON.parse(saved);
                 loginPage.classList.add('hidden');
                 appWrapper.classList.add('active');
-                loadAllData().then(() => renderDashboard());
+                renderDashboard();
             }
         }
 
-        loginForm.addEventListener('submit', async function(e) {
+        loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            loginSubmitBtn.disabled = true;
-            loginSubmitBtn.innerHTML = '<span class="loading-spinner"></span> Logging in...';
-
             const phoneInput = document.getElementById('loginPhone').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             
             let normalizedPhone = phoneInput.replace(/\D/g, '');
-
-            try {
-                // Load data first
-                await loadAllData();
-                
-                // Find member
-                const member = allWorkers.find(w => {
-                    const wPhone = (w.phone || '').replace(/\D/g, '');
-                    return wPhone === normalizedPhone || w.phone === phoneInput;
-                });
-                
-                if (member && (password === 'member123' || password === member.password)) {
-                    currentMember = member;
-                    sessionStorage.setItem('memberLoggedIn', 'true');
-                    sessionStorage.setItem('currentMember', JSON.stringify(member));
-                    loginPage.classList.add('hidden');
-                    appWrapper.classList.add('active');
-                    loginError.style.display = 'none';
-                    showToast('Welcome, ' + member.name + '!');
-                    renderDashboard();
-                } else {
-                    loginError.style.display = 'block';
-                    setTimeout(() => loginError.style.display = 'none', 3000);
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showToast('Error logging in. Please try again.', 'error');
+            const workers = getWorkers();
+            
+            const member = workers.find(w => {
+                const wPhone = (w.phone || '').replace(/\D/g, '');
+                return wPhone === normalizedPhone || w.phone === phoneInput;
+            });
+            
+            if (member && (password === 'member123' || password === member.password)) {
+                currentMember = member;
+                sessionStorage.setItem('memberLoggedIn', 'true');
+                sessionStorage.setItem('currentMember', JSON.stringify(member));
+                loginPage.classList.add('hidden');
+                appWrapper.classList.add('active');
+                loginError.style.display = 'none';
+                showToast('Welcome, ' + member.name + '!');
+                renderDashboard();
+            } else {
+                loginError.style.display = 'block';
+                setTimeout(() => loginError.style.display = 'none', 3000);
             }
-
-            loginSubmitBtn.disabled = false;
-            loginSubmitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
         });
 
-        // ===== LOGOUT =====
-        document.getElementById('logoutBtn').addEventListener('click', function() {
+        function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
                 sessionStorage.removeItem('memberLoggedIn');
                 sessionStorage.removeItem('currentMember');
@@ -803,7 +620,8 @@
                 appWrapper.classList.remove('active');
                 showToast('Logged out successfully');
             }
-        });
+        }
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
 
         // ===== THEME =====
         const themeToggle = document.getElementById('themeToggle');
@@ -818,7 +636,19 @@
             localStorage.setItem('memberTheme', body.classList.contains('dark') ? 'dark' : 'light');
         });
 
+        // ===== TOAST =====
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            toast.className = 'toast ' + type;
+            toastMsg.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
         // ===== PAYMENT SYSTEM =====
+        // Payment method selection
         document.querySelectorAll('.payment-option').forEach(opt => {
             opt.addEventListener('click', function() {
                 document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
@@ -826,7 +656,8 @@
             });
         });
 
-        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+        // Payment form submission
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             if (!currentMember) {
@@ -845,14 +676,17 @@
                 return;
             }
 
+            // Show processing
             const payBtn = document.getElementById('payButton');
             payBtn.disabled = true;
-            payBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-            try {
-                // Create payment record
+            // Simulate payment processing
+            setTimeout(() => {
+                // Record the payment
                 const paymentData = {
-                    workerId: currentMember.id || currentMember.phone,
+                    id: Date.now(),
+                    workerId: currentMember.id,
                     workerName: currentMember.name,
                     amount: amount,
                     type: type,
@@ -862,16 +696,18 @@
                     reference: reference || 'Paybill 247247',
                     status: 'completed',
                     account: '848420',
-                    paybill: '247247',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    paybill: '247247'
                 };
 
-                // Save to Firebase
-                const titheRef = await db.collection(COLLECTIONS.TITHES).add(paymentData);
-                console.log('✅ Payment saved with ID:', titheRef.id);
+                // Save to tithes
+                let tithes = getTithes();
+                tithes.push(paymentData);
+                setTithes(tithes);
 
-                // Also save to transactions
-                await db.collection(COLLECTIONS.TRANSACTIONS).add({
+                // Save to transactions
+                let transactions = getTransactions();
+                transactions.unshift({
+                    id: paymentData.id,
                     type: 'income',
                     title: `${type} - ${currentMember.name} (Paybill 247247)`,
                     amount: amount,
@@ -879,25 +715,24 @@
                     date: paymentData.date,
                     category: type,
                     reference: reference || 'Paybill 247247',
-                    account: '848420',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    account: '848420'
                 });
+                setTransactions(transactions);
 
-                // Update member's total giving
-                const workersSnap = await db.collection(COLLECTIONS.WORKERS)
-                    .where('phone', '==', currentMember.phone)
-                    .get();
-
-                if (!workersSnap.empty) {
-                    const doc = workersSnap.docs[0];
-                    const currentTotal = doc.data().totalGiving || 0;
-                    await doc.ref.update({
-                        totalGiving: currentTotal + amount
-                    });
+                // Update member's giving total
+                let workers = getWorkers();
+                const memberIndex = workers.findIndex(w => w.id === currentMember.id);
+                if (memberIndex !== -1) {
+                    workers[memberIndex].totalGiving = (workers[memberIndex].totalGiving || 0) + amount;
+                    setWorkers(workers);
                     // Update current member
-                    currentMember.totalGiving = currentTotal + amount;
+                    currentMember = workers[memberIndex];
                     sessionStorage.setItem('currentMember', JSON.stringify(currentMember));
                 }
+
+                // Trigger storage event for other tabs (management system)
+                localStorage.setItem('churchTithes', JSON.stringify(tithes));
+                localStorage.setItem('churchTransactions', JSON.stringify(transactions));
 
                 showToast(`✅ Payment of KES ${amount.toFixed(2)} via ${method} recorded successfully!`, 'success');
 
@@ -905,22 +740,56 @@
                 document.getElementById('paymentAmount').value = '';
                 document.getElementById('paymentReference').value = '';
 
-                // Reload data and refresh dashboard
-                await loadAllData();
+                // Re-enable button
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment via Paybill 247247';
+
+                // Refresh dashboard
                 renderDashboard();
+                renderPaymentHistory();
 
-            } catch (error) {
-                console.error('Payment error:', error);
-                showToast('Error processing payment. Please try again.', 'error');
-            }
-
-            payBtn.disabled = false;
-            payBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment via Paybill 247247';
+            }, 1500);
         });
 
-        // ===== RENDER FUNCTIONS =====
+        // ===== RENDER PAYMENT HISTORY =====
+        function renderPaymentHistory() {
+            const container = document.getElementById('paymentHistoryList');
+            if (!currentMember) {
+                container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">Please login to view payment history.</div>`;
+                return;
+            }
+
+            const tithes = getTithes();
+            const myPayments = tithes.filter(t => t.workerId === currentMember.id || t.workerName === currentMember.name)
+                .sort((a, b) => b.id - a.id);
+
+            if (myPayments.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">No payments recorded yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = myPayments.slice(0, 10).map(p => `
+                <div class="history-item">
+                    <div class="details">
+                        <div class="title">${p.type}</div>
+                        <div class="meta">
+                            <i class="fas fa-phone"></i> Paybill 247247 · Acct 848420
+                            ${p.reference ? ` · ${p.reference}` : ''}
+                            <br><i class="fas fa-clock"></i> ${p.date} ${p.time || ''}
+                            <span class="status success">Completed</span>
+                        </div>
+                    </div>
+                    <div class="amount income">KES ${p.amount.toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== RENDER DASHBOARD =====
         function renderDashboard() {
             if (!currentMember) return;
+            const workers = getWorkers();
+            const events = getEvents();
+            const tithes = getTithes();
 
             // Profile
             document.getElementById('memberNameDisplay').textContent = currentMember.name || 'Member';
@@ -933,16 +802,16 @@
             document.getElementById('pJoin').textContent = currentMember.joinDate || 'N/A';
 
             // Total members
-            document.getElementById('totalMembers').textContent = allWorkers.length;
+            document.getElementById('totalMembers').textContent = workers.length;
 
             // My giving
-            const myTithes = allTithes.filter(t => t.workerId === currentMember.id || t.workerId === currentMember.phone);
+            const myTithes = tithes.filter(t => t.workerId === currentMember.id || t.workerName === currentMember.name);
             const total = myTithes.reduce((s, t) => s + t.amount, 0);
             document.getElementById('myTithes').textContent = 'KES ' + total.toFixed(0);
 
             // Upcoming events
             const today = new Date().toISOString().split('T')[0];
-            const upcoming = allEvents.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+            const upcoming = events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
             document.getElementById('eventCount').textContent = upcoming.length;
 
             const eventsContainer = document.getElementById('eventsList');
@@ -967,95 +836,102 @@
             renderPaymentHistory();
         }
 
-        function renderPaymentHistory() {
-            const container = document.getElementById('paymentHistoryList');
-            if (!currentMember) {
-                container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">Please login to view payment history.</div>`;
-                return;
-            }
-
-            const myPayments = allTithes
-                .filter(t => t.workerId === currentMember.id || t.workerId === currentMember.phone || t.workerName === currentMember.name)
-                .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-
-            if (myPayments.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-muted); text-align:center; padding:0.5rem; font-size:0.9rem;">No payments recorded yet.</div>`;
-                return;
-            }
-
-            container.innerHTML = myPayments.slice(0, 10).map(p => `
-                <div class="history-item">
-                    <div class="details">
-                        <div class="title">${p.type}</div>
-                        <div class="meta">
-                            <i class="fas fa-phone"></i> Paybill 247247 · Acct 848420
-                            ${p.reference ? ` · ${p.reference}` : ''}
-                            <br><i class="fas fa-clock"></i> ${p.date} ${p.time || ''}
-                            <span class="status success">Completed</span>
-                        </div>
-                    </div>
-                    <div class="amount income">KES ${p.amount.toFixed(2)}</div>
-                </div>
-            `).join('');
-        }
-
-        // ===== LISTEN TO REAL-TIME UPDATES =====
-        function setupRealtimeListeners() {
-            // Listen for worker changes
-            db.collection(COLLECTIONS.WORKERS).onSnapshot(snapshot => {
-                allWorkers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (currentMember) renderDashboard();
-                console.log('🔄 Workers updated:', allWorkers.length);
-            }, error => console.error('Worker listener error:', error));
-
-            // Listen for tithe changes
-            db.collection(COLLECTIONS.TITHES).onSnapshot(snapshot => {
-                allTithes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (currentMember) renderDashboard();
-                console.log('🔄 Tithes updated:', allTithes.length);
-            }, error => console.error('Tithe listener error:', error));
-
-            // Listen for event changes
-            db.collection(COLLECTIONS.EVENTS).onSnapshot(snapshot => {
-                allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (currentMember) renderDashboard();
-                console.log('🔄 Events updated:', allEvents.length);
-            }, error => console.error('Event listener error:', error));
-        }
-
-        // ===== INITIALIZATION =====
-        async function init() {
-            try {
-                // Check if we need to seed data
-                const workersSnap = await db.collection(COLLECTIONS.WORKERS).limit(1).get();
-                if (workersSnap.empty) {
-                    await seedInitialData();
-                }
-                
-                // Load all data
-                await loadAllData();
-                
-                // Setup real-time listeners
-                setupRealtimeListeners();
-                
-                // If already logged in, render dashboard
+        // ===== AUTO REFRESH ON DATA CHANGE =====
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'churchWorkers' || e.key === 'churchEvents' || e.key === 'churchTithes' || e.key === 'churchTransactions') {
                 if (sessionStorage.getItem('memberLoggedIn') === 'true') {
                     const saved = sessionStorage.getItem('currentMember');
                     if (saved) {
                         currentMember = JSON.parse(saved);
+                        const workers = getWorkers();
+                        const updated = workers.find(w => w.phone === currentMember.phone);
+                        if (updated) {
+                            currentMember = updated;
+                            sessionStorage.setItem('currentMember', JSON.stringify(currentMember));
+                        }
                         renderDashboard();
+                        showToast('Data synced with church management', 'info');
                     }
                 }
-                
-                console.log('✅ Firebase initialized successfully!');
-            } catch (error) {
-                console.error('❌ Init error:', error);
-                showToast('Error connecting to Firebase. Please check your configuration.', 'error');
+            }
+        });
+
+        // ===== INIT =====
+        if (sessionStorage.getItem('memberLoggedIn') === 'true') {
+            const saved = sessionStorage.getItem('currentMember');
+            if (saved) {
+                currentMember = JSON.parse(saved);
+                const workers = getWorkers();
+                const updated = workers.find(w => w.phone === currentMember.phone);
+                if (updated) {
+                    currentMember = updated;
+                    sessionStorage.setItem('currentMember', JSON.stringify(currentMember));
+                }
+                renderDashboard();
             }
         }
 
-        // Start the app
-        init();
+        // Seed demo data if empty
+        (function seedDemoData() {
+            let workers = getWorkers();
+            let events = getEvents();
+            let tithes = getTithes();
+            let departments = getDepartments();
+            let branches = getBranches();
+
+            if (workers.length === 0 && departments.length === 0 && branches.length === 0) {
+                const deptData = [
+
+                ];
+                departments = deptData;
+                localStorage.setItem('churchDepartments', JSON.stringify(departments));
+
+                const branchData = [
+
+                ];
+                branches = branchData;
+                localStorage.setItem('churchBranches', JSON.stringify(branches));
+
+                const workerData = [
+
+                ];
+                workers = workerData;
+                localStorage.setItem('churchWorkers', JSON.stringify(workers));
+
+                const titheData = [
+                    
+                ];
+                tithes = titheData;
+                localStorage.setItem('churchTithes', JSON.stringify(tithes));
+
+                const eventData = [
+
+                ];
+                events = eventData;
+                localStorage.setItem('churchEvents', JSON.stringify(events));
+
+                let transactions = [];
+                tithes.forEach(t => { 
+                    transactions.push({ 
+                        id: t.id, 
+                        type: 'income', 
+                        title: `${t.type} - ${t.workerName} (Paybill 247247)`, 
+                        amount: t.amount, 
+                        method: t.method, 
+                        date: t.date, 
+                        category: t.type,
+                        reference: t.reference || 'Paybill 247247',
+                        account: '848420'
+                    }); 
+                });
+                localStorage.setItem('churchTransactions', JSON.stringify(transactions));
+
+                console.log('Demo data seeded with Paybill 247247 system');
+            }
+        })();
+
+        console.log('Church Connect · Member Portal with Paybill 247247, Account 848420');
+        console.log('All payments sync to Church Manager via localStorage');
     </script>
 </body>
 </html>
